@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ubibus – Transporte Público en Tiempo Real</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── VARIABLES ─── */
+    :root {
+      --green:       #3DB54A;
+      --green-mid:   #2D9E3E;
+      --green-dark:  #1E7A2C;
+      --green-light: #EAF7EC;
+      --green-pale:  #F4FBF5;
+      --navy:        #0D1F3C;
+      --navy-mid:    #1B2E50;
+      --white:       #FFFFFF;
+      --gray-50:     #F7F8F7;
+      --gray-100:    #F0F2F0;
+      --gray-200:    #E2E6E2;
+      --gray-400:    #9AA89B;
+      --gray-600:    #5A6B5C;
+      --text:        #1C2B1E;
+      --radius-sm:   6px;
+      --radius-md:   12px;
+      --radius-lg:   20px;
+      --shadow:      0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+      --shadow-md:   0 2px 8px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.08);
+      --transition:  .25s ease;
+    }
+
+    /* ─── RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--white);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    img { display: block; max-width: 100%; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ─── TYPOGRAPHY ─── */
+    h1, h2, h3, h4 { font-family: 'DM Sans', sans-serif; line-height: 1.2; font-weight: 700; }
+    h1 { font-size: clamp(2rem, 4.5vw, 3.4rem); }
+    h2 { font-size: clamp(1.7rem, 3vw, 2.4rem); }
+    h3 { font-size: 1.15rem; }
+    h4 { font-size: .95rem; font-weight: 600; }
+    p  { font-size: 1rem; color: var(--gray-600); }
+
+    .label {
+      display: inline-block;
+      font-size: .72rem; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      background: var(--green-light); color: var(--green-dark);
+      padding: .3em .85em; border-radius: 99px;
+      margin-bottom: .9rem;
+    }
+
+    /* ─── LAYOUT ─── */
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 clamp(1.25rem, 5vw, 2.5rem); }
+    section { padding: clamp(3.5rem, 7vw, 6rem) 0; }
+    .text-green { color: var(--green); }
+    .text-navy  { color: var(--navy); }
+
+    /* ─── NAVBAR ─── */
+    nav {
+      position: fixed; top: 8px; left: 10px; right: 10px; z-index: 100;
+      background: rgba(13,31,60,.97);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .85rem 0; gap: 1.5rem;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: .55rem;
+      font-size: 1.2rem; font-weight: 700; color: var(--white);
+    }
+    .nav-logo .bus-icon {
+      width: 34px; height: 34px; background: var(--green);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-links { display: flex; gap: 1.75rem; list-style: none; }
+    .nav-links a {
+      font-size: .88rem; font-weight: 500; color: rgba(255,255,255,.65);
+      transition: var(--transition);
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-cta {
+      background: var(--green); color: var(--white);
+      padding: .5rem 1.2rem; border-radius: 99px;
+      font-size: .88rem; font-weight: 600;
+      transition: var(--transition);
+    }
+    .nav-cta:hover { background: var(--green-mid); }
+
+    /* ─── HERO ─── */
+    #hero {
+      background: var(--navy);
+      min-height: 100vh;
+      padding-top: 90px;
+      display: flex; align-items: center;
+    }
+    .hero-inner {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 3rem; align-items: center;
+      padding: 3rem 0;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .45rem;
+      background: rgba(61,181,74,.15); border: 1px solid rgba(61,181,74,.25);
+      color: #7EDB8B; padding: .35em .9em; border-radius: 99px;
+      font-size: .8rem; font-weight: 500; margin-bottom: 1.4rem;
+    }
+    .hero-badge .dot {
+      width: 6px; height: 6px; background: var(--green);
+      border-radius: 50%; animation: blink 1.8s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .hero-content h1 { color: var(--white); margin-bottom: 1.1rem; }
+    .hero-content h1 em { font-style: normal; color: var(--green); }
+    .hero-content > p {
+      color: rgba(255,255,255,.6); max-width: 420px; margin-bottom: 2rem; font-size: 1.05rem;
+    }
+    .hero-pills { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 2.2rem; }
+    .hero-pill {
+      display: flex; align-items: center; gap: .45rem;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.09);
+      color: rgba(255,255,255,.8); padding: .45em 1em; border-radius: 99px;
+      font-size: .85rem;
+    }
+    .hero-buttons { display: flex; gap: .9rem; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: .45rem;
+      background: var(--green); color: var(--white);
+      padding: .75rem 1.6rem; border-radius: 99px;
+      font-size: .95rem; font-weight: 600;
+      transition: var(--transition);
+    }
+    .btn-primary:hover { background: var(--green-mid); }
+    .btn-ghost {
+      display: inline-flex; align-items: center;
+      border: 1.5px solid rgba(255,255,255,.2); color: rgba(255,255,255,.75);
+      padding: .75rem 1.6rem; border-radius: 99px;
+      font-size: .95rem; font-weight: 500;
+      transition: var(--transition);
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.5); color: var(--white); }
+
+    /* Phone mockup */
+    .hero-phone-wrap {
+      display: flex; justify-content: center; align-items: center;
+      position: relative;
+    }
+    .phone-mockup {
+      width: 218px;
+      background: #111; border-radius: 34px;
+      border: 7px solid #1e1e1e;
+      box-shadow: 0 20px 48px rgba(0,0,0,.55);
+      overflow: hidden; position: relative; z-index: 2;
+    }
+    .phone-screen { background: #f7faf7; }
+    .phone-bar {
+      background: var(--white);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .5rem .75rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .phone-brand {
+      display: flex; align-items: center; gap: .3rem;
+      font-size: .72rem; font-weight: 700; color: var(--navy);
+    }
+    .phone-brand .dot {
+      width: 20px; height: 20px; background: var(--green);
+      border-radius: 5px; display: flex; align-items: center; justify-content: center;
+    }
+    .phone-search {
+      margin: .65rem .6rem .4rem;
+      background: var(--gray-100); border-radius: 8px;
+      padding: .45rem .65rem;
+    }
+    .phone-search-q { font-size: .68rem; font-weight: 700; color: var(--navy); margin-bottom: .25rem; }
+    .phone-search-hint { font-size: .6rem; color: var(--gray-400); }
+    .phone-section-label {
+      font-size: .62rem; font-weight: 600; color: var(--navy);
+      padding: .35rem .6rem .2rem;
+    }
+    .phone-route {
+      display: flex; align-items: center; gap: .45rem;
+      background: var(--white); margin: .18rem .6rem;
+      border-radius: 7px; padding: .38rem .45rem;
+    }
+    .route-icon {
+      width: 22px; height: 22px; background: var(--green-light);
+      border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .route-text b { display: block; font-size: .6rem; color: var(--navy); }
+    .route-text span { font-size: .55rem; color: var(--gray-400); }
+    .phone-nav {
+      display: flex; justify-content: space-around;
+      padding: .5rem .4rem .35rem;
+      border-top: 1px solid var(--gray-200); margin-top: .4rem;
+    }
+    .phone-nav-item { text-align: center; font-size: .52rem; color: var(--gray-400); }
+    .phone-nav-item.active { color: var(--green); font-weight: 600; }
+
+    /* second phone */
+    .phone-mockup-2 {
+      width: 185px; background: #111; border-radius: 28px;
+      border: 6px solid #1e1e1e;
+      box-shadow: 0 12px 32px rgba(0,0,0,.4);
+      overflow: hidden; position: absolute; right: 0; top: 24px; z-index: 1;
+      opacity: .88;
+    }
+    .phone-map {
+      height: 272px; background: #cde8c6; position: relative; overflow: hidden;
+    }
+    .map-lines {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+    .map-road-v {
+      position: absolute; left: 50%; top: 0; bottom: 0; width: 5px;
+      background: rgba(255,255,255,.7); transform: translateX(-50%) rotate(5deg);
+    }
+    .map-road-h {
+      position: absolute; top: 44%; left: 0; right: 0; height: 5px;
+      background: rgba(255,255,255,.7);
+    }
+    .map-route { position: absolute; left: 42%; top: 8%; bottom: 8%; width: 2px; background: var(--navy); }
+    .map-pin {
+      position: absolute; width: 14px; height: 14px;
+      background: var(--green); border-radius: 50%; border: 2px solid white;
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+    .map-pin.a { top: 10%; left: 40%; }
+    .map-pin.b { top: 46%; left: 40%; }
+    .map-pin.c { bottom: 10%; left: 40%; background: var(--navy); }
+    .map-footer {
+      background: var(--navy); color: var(--white);
+      padding: .4rem .5rem; font-size: .55rem; font-weight: 600;
+    }
+
+    /* ─── PROBLEM ─── */
+    #problem { background: var(--gray-50); }
+    .problem-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;
+    }
+    .problem-content h2 { color: var(--navy); margin-bottom: .9rem; }
+    .problem-content p { margin-bottom: .6rem; }
+    .problem-questions { display: flex; flex-direction: column; gap: .6rem; margin-top: 1.6rem; }
+    .problem-q {
+      display: flex; align-items: center; gap: .85rem;
+      background: var(--white); border-radius: var(--radius-md);
+      padding: .85rem 1.1rem; box-shadow: var(--shadow);
+      border-left: 3px solid var(--green);
+      font-size: .92rem; font-weight: 500; color: var(--navy);
+    }
+    .q-icon {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--green-light);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .problem-visual {
+      background: var(--white); border-radius: var(--radius-lg);
+      padding: 2rem; box-shadow: var(--shadow-md);
+    }
+    .placeholder-img {
+      width: 100%; height: 200px; background: var(--green-pale);
+      border-radius: var(--radius-md); border: 2px dashed var(--gray-200);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: .6rem; color: var(--gray-400);
+    }
+    .placeholder-img span { font-size: .78rem; }
+
+    /* ─── SOLUTION ─── */
+    #solution { background: var(--white); }
+    .section-header { max-width: 560px; margin: 0 auto 3rem; text-align: center; }
+    .section-header h2 { color: var(--navy); margin-bottom: .6rem; }
+    .solution-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.25rem; }
+    .sol-card {
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius-lg);
+      padding: 2rem; background: var(--white);
+      transition: var(--transition);
+    }
+    .sol-card:hover { border-color: var(--green); box-shadow: var(--shadow-md); }
+    .sol-card .icon {
+      width: 48px; height: 48px; background: var(--green-light);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 1.1rem;
+    }
+    .sol-card h3 { color: var(--navy); margin-bottom: .5rem; }
+
+    /* ─── OBJECTIVES ─── */
+    #objectives { background: var(--navy); }
+    #objectives .label { background: rgba(61,181,74,.18); color: #7EDB8B; }
+    #objectives .section-header h2 { color: var(--white); }
+    #objectives .section-header p { color: rgba(255,255,255,.5); }
+    .obj-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.1rem; }
+    .obj-card {
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius-md); padding: 1.6rem; text-align: center;
+      transition: var(--transition);
+    }
+    .obj-card:hover { background: rgba(61,181,74,.1); border-color: rgba(61,181,74,.3); }
+    .obj-icon {
+      width: 52px; height: 52px; background: rgba(61,181,74,.15);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center; margin: 0 auto .9rem;
+    }
+    .obj-card h4 { color: var(--white); margin-bottom: .3rem; font-size: .95rem; }
+    .obj-card p { font-size: .84rem; color: rgba(255,255,255,.45); }
+
+    /* ─── MODULES ─── */
+    #modules { background: var(--gray-50); }
+    .modules-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.25rem; }
+    .mod-card {
+      background: var(--white); border-radius: var(--radius-lg);
+      padding: 1.75rem; box-shadow: var(--shadow);
+      border-top: 3px solid transparent;
+    }
+    .mod-card.users   { border-top-color: #4A90D9; }
+    .mod-card.drivers { border-top-color: var(--green); }
+    .mod-card.admins  { border-top-color: var(--navy); }
+    .mod-header { display: flex; align-items: center; gap: .7rem; margin-bottom: .8rem; }
+    .mod-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .mod-icon.users  { background: #EBF4FF; }
+    .mod-icon.drivers{ background: var(--green-light); }
+    .mod-icon.admins { background: #EEEEF6; }
+    .mod-card h3 { font-size: 1.1rem; }
+    .mod-card h3.users  { color: #2C6DB0; }
+    .mod-card h3.drivers{ color: var(--green-dark); }
+    .mod-card h3.admins { color: var(--navy); }
+    .mod-desc {
+      font-size: .86rem; color: var(--gray-600);
+      border-bottom: 1px solid var(--gray-100); padding-bottom: .9rem; margin-bottom: .9rem;
+    }
+    .mod-list { list-style: none; display: flex; flex-direction: column; gap: .45rem; }
+    .mod-list li {
+      display: flex; align-items: flex-start; gap: .55rem;
+      font-size: .85rem; color: var(--gray-600);
+    }
+    .mod-list li::before {
+      content: ''; display: inline-block; flex-shrink: 0;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--green); margin-top: .45rem;
+    }
+    .mod-card.users  .mod-list li::before { background: #4A90D9; }
+    .mod-card.admins .mod-list li::before { background: var(--navy-mid); }
+
+    /* ─── COMPARISON ─── */
+    #comparison { background: var(--white); }
+    .table-wrap {
+      overflow-x: auto; border-radius: var(--radius-lg);
+      border: 1.5px solid var(--gray-200); margin-top: 2.5rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    thead { background: var(--navy); }
+    thead th {
+      padding: 1.1rem 1.4rem; text-align: left;
+      color: var(--white); font-weight: 600; font-size: .88rem;
+    }
+    thead th.hl { background: var(--green-mid); }
+    tbody tr { border-bottom: 1px solid var(--gray-100); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--gray-50); }
+    td { padding: .9rem 1.4rem; color: var(--gray-600); vertical-align: top; }
+    td:first-child { font-weight: 600; color: var(--navy); }
+    td.hl { background: var(--green-pale); }
+    .badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .2em .65em; border-radius: 99px; font-size: .78rem; font-weight: 600;
+    }
+    .badge-green { background: var(--green-light); color: var(--green-dark); }
+    .badge-warn  { background: #FFF3E0; color: #C97A15; }
+    .badge-blue  { background: #EBF4FF; color: #2C6DB0; }
+    .no { color: #C94040; font-weight: 600; }
+
+    /* ─── ADVERTISING ─── */
+    #advertising { background: var(--green-pale); }
+    .ad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+    .ad-grid h2 { color: var(--navy); margin-bottom: .7rem; }
+    .ad-grid > div > p { margin-bottom: 1.6rem; }
+    .ad-benefits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
+    .ad-benefit {
+      background: var(--white); border-radius: var(--radius-md);
+      padding: 1rem; box-shadow: var(--shadow);
+      display: flex; gap: .65rem; align-items: flex-start;
+    }
+    .ad-benefit-icon {
+      width: 34px; height: 34px; border-radius: var(--radius-sm);
+      background: var(--green-light);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .ad-benefit h4 { color: var(--navy); margin-bottom: .15rem; }
+    .ad-benefit p { font-size: .8rem; }
+    .ad-visual {
+      background: var(--white); border-radius: var(--radius-lg);
+      padding: 2rem; box-shadow: var(--shadow-md);
+    }
+    .bus-illustration {
+      width: 100%; height: 140px;
+      background: linear-gradient(130deg, var(--navy) 0%, #142840 100%);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem; overflow: hidden; position: relative;
+    }
+    .bus-body-el {
+      width: 240px; height: 82px; background: var(--green);
+      border-radius: 10px 14px 6px 6px; position: relative;
+    }
+    .bus-body-el::before {
+      content: '';
+      position: absolute; top: 10px; left: 16px; right: 16px; height: 38px;
+      background: var(--navy); border-radius: 4px; opacity: .7;
+    }
+    .bus-body-el::after {
+      content: 'Ubibus';
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      font-size: .7rem; font-weight: 700; color: var(--white);
+    }
+    .bus-wheel-el {
+      position: absolute; bottom: -10px; width: 22px; height: 22px;
+      background: #1a1a1a; border: 3px solid #444; border-radius: 50%;
+    }
+    .bus-wheel-el.l { left: 24px; }
+    .bus-wheel-el.r { right: 24px; }
+    .ad-visual p { font-size: .83rem; color: var(--gray-400); text-align: center; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--navy); padding: 2.5rem 0; text-align: center;
+    }
+    .footer-logo {
+      display: flex; align-items: center; justify-content: center; gap: .6rem;
+      font-size: 1.3rem; font-weight: 700; color: var(--white); margin-bottom: .85rem;
+    }
+    .footer-logo .dot {
+      width: 32px; height: 32px; background: var(--green);
+      border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    }
+    footer p { color: rgba(255,255,255,.4); font-size: .85rem; }
+    .footer-tagline { color: rgba(255,255,255,.6); margin-bottom: .35rem; }
+    .footer-nav {
+      display: flex; gap: 1.4rem; justify-content: center; flex-wrap: wrap;
+      list-style: none; margin: 1rem 0;
+    }
+    .footer-nav a { font-size: .83rem; color: rgba(255,255,255,.4); transition: var(--transition); }
+    .footer-nav a:hover { color: var(--green); }
+
+    /* ─── REVEAL ANIMATIONS ─── */
+    .reveal {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity .55s ease, transform .55s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+    .d1 { transition-delay: .08s; }
+    .d2 { transition-delay: .16s; }
+    .d3 { transition-delay: .24s; }
+    .d4 { transition-delay: .32s; }
+    .d5 { transition-delay: .40s; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 860px) {
+      .hero-inner       { grid-template-columns: 1fr; text-align: center; }
+      .hero-content > p { max-width: 100%; }
+      .hero-pills       { justify-content: center; }
+      .hero-buttons     { justify-content: center; }
+      .hero-phone-wrap  { display: none; }
+      .problem-grid     { grid-template-columns: 1fr; }
+      .solution-grid    { grid-template-columns: 1fr; }
+      .obj-grid         { grid-template-columns: repeat(2,1fr); }
+      .modules-grid     { grid-template-columns: 1fr; }
+      .ad-grid          { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .obj-grid          { grid-template-columns: 1fr 1fr; }
+      .nav-links, .nav-cta { display: none; }
+      .ad-benefits-grid  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav>
+  <div class="container nav-inner">
+    <a href="#hero" class="nav-logo">
+      <div class="bus-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="4" width="20" height="14" rx="3" fill="white"/>
+          <rect x="4" y="6" width="6" height="5" rx="1" fill="#3DB54A"/>
+          <rect x="14" y="6" width="6" height="5" rx="1" fill="#3DB54A"/>
+          <circle cx="7" cy="20" r="2" fill="white"/>
+          <circle cx="17" cy="20" r="2" fill="white"/>
+        </svg>
+      </div>
+      Ubibus
+    </a>
+    <ul class="nav-links">
+      <li><a href="#problem">Problemática</a></li>
+      <li><a href="#solution">Solución</a></li>
+      <li><a href="#objectives">Objetivos</a></li>
+      <li><a href="#modules">Módulos</a></li>
+      <li><a href="#comparison">Comparativa</a></li>
+    </ul>
+    <a href="#solution" class="nav-cta">Ver más</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          En desarrollo activo · ZMG
+        </div>
+        <h1>Transporte público <em>en tiempo real.</em></h1>
+        <p>Conectamos rutas, conductores y usuarios para una movilidad más eficiente en la Zona Metropolitana de Guadalajara.</p>
+        <div class="hero-pills">
+          <div class="hero-pill">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            Ubica tu camión en tiempo real
+          </div>
+          <div class="hero-pill">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2.5"><path d="M18 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2z"/><path d="M9 9h6M9 13h4"/></svg>
+            Conecta rutas y destinos
+          </div>
+          <div class="hero-pill">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Viaja informado, viaja tranquilo
+          </div>
+        </div>
+        <div class="hero-buttons">
+          <a href="#solution" class="btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Conocer la solución
+          </a>
+          <a href="#comparison" class="btn-ghost">Ver comparativa</a>
+        </div>
+      </div>
+
+      <div class="hero-phone-wrap">
+        <!-- Main phone -->
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <div class="phone-bar">
+              <div class="phone-brand">
+                <div class="dot">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><rect x="2" y="4" width="20" height="14" rx="3"/></svg>
+                </div>
+                Ubibus
+              </div>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </div>
+            <div class="phone-search">
+              <div class="phone-search-q">¿A dónde vas?</div>
+              <div class="phone-search-hint">Ej: World Trade Center</div>
+            </div>
+            <div class="phone-section-label">Rutas usuales</div>
+            <div class="phone-route">
+              <div class="route-icon">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2.5"><rect x="2" y="4" width="20" height="14" rx="2"/></svg>
+              </div>
+              <div class="route-text"><b>Plaza Americas</b><span>Patria #345 → Plaza Americas</span></div>
+            </div>
+            <div class="phone-route">
+              <div class="route-icon">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2.5"><rect x="2" y="4" width="20" height="14" rx="2"/></svg>
+              </div>
+              <div class="route-text"><b>Ceti Colomos</b><span>San Pedro #453 → Ceti Colomos</span></div>
+            </div>
+            <div class="phone-route">
+              <div class="route-icon">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2.5"><rect x="2" y="4" width="20" height="14" rx="2"/></svg>
+              </div>
+              <div class="route-text"><b>Plaza de la República</b><span>Naciones Unidas #7500</span></div>
+            </div>
+            <div class="phone-nav">
+              <div class="phone-nav-item active">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#3DB54A" style="margin:0 auto .1rem"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                Inicio
+              </div>
+              <div class="phone-nav-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" style="margin:0 auto .1rem"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Mapa
+              </div>
+              <div class="phone-nav-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" style="margin:0 auto .1rem"><rect x="2" y="4" width="20" height="14" rx="2"/></svg>
+                Rutas
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Map phone -->
+        <div class="phone-mockup-2">
+          <div class="phone-map">
+            <div class="map-lines"></div>
+            <div class="map-road-v"></div>
+            <div class="map-road-h"></div>
+            <div class="map-route"></div>
+            <div class="map-pin a"></div>
+            <div class="map-pin b"></div>
+            <div class="map-pin c"></div>
+            <div class="map-footer">Ruta C01 (604) – Desvío</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PROBLEM ── -->
+<section id="problem">
+  <div class="container">
+    <div class="problem-grid">
+      <div class="reveal">
+        <span class="label">Problemática</span>
+        <h2 class="text-navy">La movilidad urbana marcada por la <span class="text-green">incertidumbre.</span></h2>
+        <p>Los usuarios del transporte público no saben con precisión cuándo llegará su camión, si la ruta sigue su recorrido habitual o cuánto tiempo tendrán que esperar.</p>
+        <p>Esto genera estrés, pérdida de tiempo y desconfianza en el sistema.</p>
+        <div class="problem-questions">
+          <div class="problem-q reveal d1">
+            <div class="q-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            ¿Cuándo llega mi camión?
+          </div>
+          <div class="problem-q reveal d2">
+            <div class="q-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2.5"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+            </div>
+            ¿Sigue su ruta habitual?
+          </div>
+          <div class="problem-q reveal d3">
+            <div class="q-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2.5"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M9 7h6M9 11h4"/></svg>
+            </div>
+            ¿Cuánto tiempo tendré que esperar?
+          </div>
+        </div>
+      </div>
+      <div class="problem-visual reveal d2">
+        <div class="placeholder-img">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#9AA89B" stroke-width="1.5">
+            <circle cx="12" cy="7" r="4"/><path d="M6 21v-2a6 6 0 0112 0v2"/>
+          </svg>
+          <span>Pasajero esperando en la parada</span>
+        </div>
+        <p style="text-align:center;font-size:.82rem;color:var(--gray-400);margin-top:1rem;font-style:italic;">
+          Miles de usuarios de la ZMG se enfrentan a esta realidad cada día
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SOLUTION ── -->
+<section id="solution">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Solución</span>
+      <h2>¿Qué propone <span class="text-green">Ubibus?</span></h2>
+      <p>Una plataforma móvil que conecta en tiempo real a usuarios, choferes y administradores del transporte urbano.</p>
+    </div>
+    <div class="solution-grid">
+      <div class="sol-card reveal d1">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
+        </div>
+        <h3 class="text-navy">Información precisa y en tiempo real</h3>
+        <p>Plataforma móvil enfocada en brindar información exacta sobre el transporte público urbano de la ZMG.</p>
+      </div>
+      <div class="sol-card reveal d2">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        </div>
+        <h3 class="text-navy">Comunicación directa y oportuna</h3>
+        <p>La información la envían los choferes directamente a través de una app sencilla e intuitiva.</p>
+      </div>
+      <div class="sol-card reveal d3">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        </div>
+        <h3 class="text-navy">Rastreo GPS en tiempo real</h3>
+        <p>Los usuarios ven la ubicación exacta de su camión, reduciendo la incertidumbre y optimizando el tiempo de espera.</p>
+      </div>
+      <div class="sol-card reveal d4">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="3"/><path d="M8 10h8M8 14h5"/></svg>
+        </div>
+        <h3 class="text-navy">Interfaz simple para choferes</h3>
+        <p>Rápida, práctica y pensada para la jornada del conductor. Iniciar una ruta es tan sencillo como un clic.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── OBJECTIVES ── -->
+<section id="objectives">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Objetivos</span>
+      <h2>Metas del proyecto</h2>
+      <p>Lo que Ubibus busca lograr para sus usuarios, choferes y el ecosistema de transporte.</p>
+    </div>
+    <div class="obj-grid">
+      <div class="obj-card reveal d1">
+        <div class="obj-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        </div>
+        <h4>Mejorar la experiencia</h4>
+        <p>del usuario al moverse en el transporte público</p>
+      </div>
+      <div class="obj-card reveal d2">
+        <div class="obj-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        </div>
+        <h4>Reducir incertidumbre</h4>
+        <p>en paradas o cambios de ruta</p>
+      </div>
+      <div class="obj-card reveal d3">
+        <div class="obj-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 8v4"/><circle cx="12" cy="16" r=".5" fill="#3DB54A"/></svg>
+        </div>
+        <h4>Facilitar el rastreo</h4>
+        <p>para choferes y operadores</p>
+      </div>
+      <div class="obj-card reveal d1">
+        <div class="obj-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <h4>Escalabilidad futura</h4>
+        <p>con intención de crecer a todo México</p>
+      </div>
+      <div class="obj-card reveal d2">
+        <div class="obj-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3"/></svg>
+        </div>
+        <h4>Monitoreo en tiempo real</h4>
+        <p>de todas las unidades activas</p>
+      </div>
+      <div class="obj-card reveal d3">
+        <div class="obj-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+        <h4>Información precisa</h4>
+        <p>de las unidades en cada momento</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MODULES ── -->
+<section id="modules">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Módulos del sistema</span>
+      <h2 class="text-navy">Tres perfiles, <span class="text-green">una plataforma</span></h2>
+      <p>Ubibus está diseñado para tres tipos de usuarios con necesidades y flujos distintos.</p>
+    </div>
+    <div class="modules-grid">
+
+      <!-- USUARIOS -->
+      <div class="mod-card users reveal d1">
+        <div class="mod-header">
+          <div class="mod-icon users">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a6 6 0 0112 0v2"/></svg>
+          </div>
+          <h3 class="users">Usuarios</h3>
+        </div>
+        <p class="mod-desc">Mejora la experiencia del pasajero y reduce la incertidumbre durante sus trayectos.</p>
+        <ul class="mod-list">
+          <li>Ver camiones en tiempo real</li>
+          <li>Buscar rutas inteligentes</li>
+          <li>Consultar paradas cercanas</li>
+          <li>Visualizar tiempos estimados</li>
+          <li>Ver desvíos y notificaciones</li>
+          <li>Consultar rutas frecuentes</li>
+          <li>Interfaz intuitiva y minimalista</li>
+        </ul>
+      </div>
+
+      <!-- CHOFERES -->
+      <div class="mod-card drivers reveal d2">
+        <div class="mod-header">
+          <div class="mod-icon drivers">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="3"/><path d="M8 18v2M16 18v2"/></svg>
+          </div>
+          <h3 class="drivers">Choferes</h3>
+        </div>
+        <p class="mod-desc">Rápido, simple y práctico durante la jornada del conductor.</p>
+        <ul class="mod-list">
+          <li>Iniciar ruta con un clic</li>
+          <li>Finalizar ruta fácilmente</li>
+          <li>Compartir ubicación GPS en tiempo real</li>
+          <li>Enviar notificaciones rápidas</li>
+          <li>Reportar tráfico o incidencias</li>
+          <li>Gestión simple de unidad y ruta</li>
+          <li>Menú lateral con perfil y ajustes</li>
+          <li>Basado en el módulo Driver actual</li>
+        </ul>
+      </div>
+
+      <!-- ADMINISTRADORES -->
+      <div class="mod-card admins reveal d3">
+        <div class="mod-header">
+          <div class="mod-icon admins">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D1F3C" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </div>
+          <h3 class="admins">Administradores</h3>
+        </div>
+        <p class="mod-desc">Monitoreo y gestión operativa del sistema completo.</p>
+        <ul class="mod-list">
+          <li>Visualización global de rutas</li>
+          <li>Gestión de choferes</li>
+          <li>Alta y modificación de rutas</li>
+          <li>Monitoreo de unidades activas</li>
+          <li>Gestión de notificaciones</li>
+          <li>Administración de incidencias</li>
+          <li>Configuración del sistema</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── COMPARISON ── -->
+<section id="comparison">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Estado del arte</span>
+      <h2 class="text-navy">Ubibus vs la <span class="text-green">competencia</span></h2>
+      <p>Una visión comparativa frente a las principales alternativas disponibles en el mercado.</p>
+    </div>
+    <div class="table-wrap reveal d1">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th class="hl">🚌 Ubibus</th>
+            <th>🟠 Moovit</th>
+            <th>🟡 Ualabee <small style="font-weight:400;opacity:.7;display:block;">Gob. de Jalisco</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Enfoque</td>
+            <td class="hl">Movilidad urbana integral para todos los ciudadanos</td>
+            <td>Información y planificación de movilidad global</td>
+            <td>Movilidad turística y principal durante el Mundial</td>
+          </tr>
+          <tr>
+            <td>Cobertura</td>
+            <td class="hl">Zona Metropolitana de Guadalajara (ZMG)</td>
+            <td>Cobertura global en miles de ciudades</td>
+            <td>Zonas turísticas y principales de GDL</td>
+          </tr>
+          <tr>
+            <td>Transporte</td>
+            <td class="hl">Camión, tren ligero, BRT, etc.</td>
+            <td>Múltiples modos por ciudad</td>
+            <td>Zonas turísticas y principales</td>
+          </tr>
+          <tr>
+            <td>Rastreo en tiempo real</td>
+            <td class="hl"><span class="badge badge-green">✓ Sí</span> — Unidades y rutas</td>
+            <td><span class="no">✗ No</span></td>
+            <td><span class="badge badge-warn">⚡ Temporal</span> — Solo durante el Mundial</td>
+          </tr>
+          <tr>
+            <td>Publicidad</td>
+            <td class="hl"><span class="badge badge-green">Discreta</span> — Skins en camiones</td>
+            <td><span class="badge badge-warn">Exceso</span> de publicidad</td>
+            <td>No especificado</td>
+          </tr>
+          <tr>
+            <td>Estado actual</td>
+            <td class="hl"><span class="badge badge-green">En desarrollo activo</span></td>
+            <td><span class="badge badge-blue">Establecido</span> y en operación</td>
+            <td><span class="badge badge-warn">En desarrollo</span> — Temporal</td>
+          </tr>
+          <tr>
+            <td>Visión a futuro</td>
+            <td class="hl">Crecer a todo México</td>
+            <td>Enfoque global</td>
+            <td>Proyecto temporal para el Mundial</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── ADVERTISING ── -->
+<section id="advertising">
+  <div class="container">
+    <div class="ad-grid">
+      <div class="reveal">
+        <span class="label">Modelo de negocio</span>
+        <h2 class="text-navy">Publicidad <span class="text-green">inteligente</span></h2>
+        <p>Ubibus genera ingresos a través de publicidad discreta aplicada a los skins de los camiones, creando valor para marcas y usuarios por igual.</p>
+        <div class="ad-benefits-grid">
+          <div class="ad-benefit reveal d1">
+            <div class="ad-benefit-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            </div>
+            <div>
+              <h4>Publicidad dinámica y moderna</h4>
+              <p>Integrada en la experiencia visual</p>
+            </div>
+          </div>
+          <div class="ad-benefit reveal d2">
+            <div class="ad-benefit-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <div>
+              <h4>Mayor visibilidad para marcas</h4>
+              <p>Millones de impresiones en la ZMG</p>
+            </div>
+          </div>
+          <div class="ad-benefit reveal d3">
+            <div class="ad-benefit-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div>
+              <h4>Monetización sostenible</h4>
+              <p>Modelo que financia el sistema</p>
+            </div>
+          </div>
+          <div class="ad-benefit reveal d4">
+            <div class="ad-benefit-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DB54A" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            </div>
+            <div>
+              <h4>Experiencia visual atractiva</h4>
+              <p>Sin interrumpir al usuario</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ad-visual reveal d2">
+        <div class="bus-illustration">
+          <div style="position:relative;">
+            <div class="bus-body-el">
+              <div class="bus-wheel-el l"></div>
+              <div class="bus-wheel-el r"></div>
+            </div>
+          </div>
+        </div>
+        <p>Los camiones llevan el branding de Ubibus como medio publicitario</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container">
+    <div class="footer-logo">
+      <div class="dot">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><rect x="2" y="4" width="20" height="14" rx="3"/></svg>
+      </div>
+      Ubibus
+    </div>
+    <p class="footer-tagline">Transporte público en tiempo real · Zona Metropolitana de Guadalajara</p>
+    <ul class="footer-nav">
+      <li><a href="#hero">Inicio</a></li>
+      <li><a href="#problem">Problemática</a></li>
+      <li><a href="#solution">Solución</a></li>
+      <li><a href="#objectives">Objetivos</a></li>
+      <li><a href="#modules">Módulos</a></li>
+      <li><a href="#comparison">Comparativa</a></li>
+      <li><a href="#advertising">Publicidad</a></li>
+    </ul>
+    <p>© 2025 Ubibus. Proyecto en desarrollo activo.</p>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+    { threshold: 0.1 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
